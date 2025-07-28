@@ -72,7 +72,13 @@ def upload_resume():
         if file.filename == '':
             return jsonify({'error': 'No selected file'}), 400
 
-        filepath = os.path.join(UPLOAD_FOLDER, "uploaded_resume.pdf")
+        # Get file extension
+        ext = file.filename.rsplit('.', 1)[-1].lower()
+        if ext not in ['pdf', 'docx']:
+            return jsonify({'error': 'Unsupported file format. Only PDF and DOCX allowed.'}), 400
+
+        # Save with original extension
+        filepath = os.path.join(UPLOAD_FOLDER, f"uploaded_resume.{ext}")
         file.save(filepath)
 
         # Extract basic info, skills, and full text
@@ -84,7 +90,7 @@ def upload_resume():
         # Get domain and tips
         domain_line, tips = get_resume_tips(skills)
 
-        # Calculate resume score using logic
+        # Calculate resume score
         score = calculate_resume_score(full_text, skills)
 
         # Return ordered response
@@ -99,8 +105,6 @@ def upload_resume():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-
 
 if __name__ == '__main__':
     app.run(debug=True)

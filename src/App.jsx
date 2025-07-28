@@ -27,7 +27,7 @@ function App() {
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-md w-full max-w-md">
         <input
           type="file"
-          accept=".pdf"
+          accept=".pdf,.docx"
           onChange={handleFileChange}
           className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
         />
