@@ -1,15 +1,31 @@
 import re
 import PyPDF2
+import docx
+
+def extract_text_from_pdf(file_path):
+    with open(file_path, 'rb') as file:
+        reader = PyPDF2.PdfReader(file)
+        text = ""
+        for page in reader.pages:
+            page_text = page.extract_text()
+            if page_text:
+                text += page_text + "\n"
+    return text
+
+def extract_text_from_docx(file_path):
+    doc = docx.Document(file_path)
+    return "\n".join([para.text for para in doc.paragraphs if para.text.strip()])
 
 def extract_info(file_path):
     basic_info = {}
     skills = []
 
-    with open(file_path, 'rb') as file:
-        reader = PyPDF2.PdfReader(file)
-        text = ""
-        for page in reader.pages:
-            text += page.extract_text() + "\n"
+    if file_path.endswith(".pdf"):
+        text = extract_text_from_pdf(file_path)
+    elif file_path.endswith(".docx"):
+        text = extract_text_from_docx(file_path)
+    else:
+        raise ValueError("Unsupported file format. Please upload a PDF or DOCX file.")
 
     # Normalize lines
     text_lines = [line.strip() for line in text.splitlines() if line.strip()]
@@ -32,7 +48,7 @@ def extract_info(file_path):
     basic_info['email'] = email_match.group() if email_match else "Not found"
     basic_info['phone'] = phone_match.group() if phone_match else "Not found"
 
-    # Find skills section (from "Skills" to next heading like "Education", "Experience")
+    # Find skills section (from "Skills" to next heading)
     skills_text = ""
     skill_start = -1
     for i, line in enumerate(text_lines):
@@ -46,7 +62,6 @@ def extract_info(file_path):
                 break
             skills_text += text_lines[i] + "\n"
 
-    # Extract skills from the detected skills section only
     known_skills = [
         'python', 'java', 'c++', 'c', 'r', 'scikit-learn', 'nltk',
         'pandas', 'numpy', 'matplotlib', 'seaborn',
@@ -73,5 +88,6 @@ def extract_info(file_path):
     return {
         "basic_info": basic_info,
         "skills": extracted_skills,
-        "tips": tips
+        "tips": tips,
+        "text": text_full
     }
