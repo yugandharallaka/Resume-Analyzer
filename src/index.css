@@ -1,68 +1,192 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(to bottom right, #f0f4f8, #dceefb);
+  color: #2c3e50;
+}
+
+.container {
+  max-width: 900px;
+  margin: auto;
+  padding: 30px;
+  text-align: center;
 }
 
 h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 30px;
+  color: #1abc9c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
+/* Upload Section */
+.upload-section {
+  margin-bottom: 30px;
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+}
+
+input[type="file"] {
+  display: none;
+}
+
+.custom-file-upload {
+  display: inline-block;
+  padding: 12px 20px;
+  background-color: #1abc9c;
+  color: white;
+  font-weight: 600;
+  font-size: 15px;
+  border-radius: 40px;
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  transition: background-color 0.3s ease;
+  border: 2px solid #16a085;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 12px;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+.custom-file-upload:hover {
+  background-color: #16a085;
+  border-color: #148f77;
+}
+
+.upload-section button {
+  padding: 12px 20px;
+  background-color: #16a085;
+  color: white;
+  border: none;
+  border-radius: 40px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.upload-section button:hover {
+  background-color: #1c8041;
+}
+
+/* Loading Message */
+.loading {
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: #e67e22;
+}
+
+/* Results */
+.results h2 {
+  margin-top: 25px;
+  color: #34495e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 1.5rem;
+}
+
+/* Skills List (Extracted from Resume) */
+.skills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 0;
+  justify-content: center;
+  list-style: none;
+  margin-top: 10px;
+}
+
+.skills-list li {
+  background-color: #d1f2eb;
+  color: #117864;
+  border-radius: 50px;
+  padding: 6px 16px;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* Resume Score */
+.score-circle {
+  width: 150px;
+  height: 150px;
+  margin: 30px auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Resume Tips */
+.tips-section {
+  margin-top: 30px;
+}
+
+.tips-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+}
+
+.skill-pill-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.skill-pill {
+  background-color: #fce4ec;
+  border: 1px solid #ec407a;
+  color: #ad1457;
+  border-radius: 50px;
+  padding: 6px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.skill-pill:hover {
+  background-color: #f8bbd0;
+  cursor: pointer;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .container {
+    padding: 20px;
   }
-  a:hover {
-    color: #747bff;
+
+  h1 {
+    font-size: 1.8rem;
   }
-  button {
-    background-color: #f9f9f9;
+
+  .results h2 {
+    font-size: 1.3rem;
+  }
+
+  .upload-section {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .custom-file-upload,
+  .upload-section button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .score-circle {
+    width: 120px;
+    height: 120px;
   }
 }

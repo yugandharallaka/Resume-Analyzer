@@ -1,89 +1,152 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState } from "react";
+import axios from "axios";
+import {
+  FaBrain, FaFileAlt, FaTools, FaFolderOpen, FaChartBar, FaThumbtack
+} from "react-icons/fa";
+import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
+import "react-circular-progressbar/dist/styles.css";
+import "./index.css";
 
-function App() {
+const App = () => {
   const [file, setFile] = useState(null);
-  const [result, setResult] = useState(null);
+  const [fileName, setFileName] = useState('');
+  const [extractedInfo, setExtractedInfo] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleFileChange = (e) => setFile(e.target.files[0]);
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    setFile(selectedFile);
+    setFileName(selectedFile ? selectedFile.name : '');
+  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleAnalyze = async () => {
+    if (!file) {
+      alert("Please upload a resume file first.");
+      return;
+    }
+
     const formData = new FormData();
-    formData.append('resume', file);
+    formData.append("resume", file); // must match backend field name
 
+    setLoading(true);
     try {
-      const res = await axios.post('http://localhost:5000/upload', formData);
-      setResult(res.data);
-    } catch (err) {
-      alert("Error: " + err.message);
+      const response = await axios.post("http://127.0.0.1:5000/upload", formData);
+      setExtractedInfo({
+        name: response.data.basic_info.name,
+        email: response.data.basic_info.email,
+        phone: response.data.basic_info.phone,
+        skills: response.data.skills,
+        recommended_domain: response.data.domain,
+        resume_score: response.data.score,
+        tips: response.data.tips
+      });
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      alert("Failed to analyze resume.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white flex flex-col items-center px-4 py-10 font-sans">
-      <h1 className="text-4xl font-bold mb-8 text-center tracking-tight drop-shadow-lg">
-        🧠 AI Resume Analyzer
-      </h1>
+    <div className="container">
+      <h1><FaBrain /> AI Resume Analyzer</h1>
 
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white/10 backdrop-blur-md rounded-2xl p-6 w-full max-w-md shadow-xl border border-white/10"
-      >
-        <label className="block text-sm mb-2 font-medium text-gray-300">Upload your Resume</label>
+      {/* Upload Section */}
+      <div className="upload-section">
+        <label htmlFor="file-upload" className="custom-file-upload">
+          📄 Choose Resume
+        </label>
         <input
+          id="file-upload"
           type="file"
-          accept=".pdf,.docx"
           onChange={handleFileChange}
-          className="w-full text-sm text-gray-100 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-500 file:text-white hover:file:bg-indigo-600 cursor-pointer"
+          accept=".pdf,.doc,.docx"
+          style={{ display: "none" }}
         />
-        <button
-          type="submit"
-          className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 transition-colors text-white py-2 px-4 rounded-lg font-semibold shadow-md"
-        >
-          🔍 Analyze Resume
-        </button>
-      </form>
+        <button onClick={handleAnalyze}>Analyze</button>
+      </div>
 
-      {result && (
-        <div className="mt-10 w-full max-w-3xl bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/10 shadow-lg">
-          <h2 className="text-2xl font-semibold mb-4">📋 Extracted Information</h2>
-          <div className="space-y-2">
-            <p><strong>Name:</strong> {result.basic_info.name}</p>
-            <p><strong>Email:</strong> {result.basic_info.email}</p>
-            <p><strong>Phone:</strong> {result.basic_info.phone}</p>
-          </div>
+      {/* File name preview */}
+      {fileName && (
+        <p style={{ marginTop: '10px', fontSize: '14px', color: '#2c3e50' }}>
+          Selected File: <strong>{fileName}</strong>
+        </p>
+      )}
 
-          <h2 className="text-2xl font-semibold mt-6 mb-2">🛠️ Skills</h2>
-          <ul className="list-disc list-inside space-y-1 text-sm text-gray-200">
-            {result.skills.map((skill, idx) => <li key={idx}>{skill}</li>)}
+      {/* Loading state */}
+      {loading && <p className="loading">Analyzing resume...</p>}
+
+      {/* Results Section */}
+      {extractedInfo && (
+        <div className="results">
+          <h2><FaFileAlt /> Extracted Information</h2>
+          <p><strong>Name:</strong> {extractedInfo.name}</p>
+          <p><strong>Email:</strong> {extractedInfo.email}</p>
+          <p><strong>Phone:</strong> {extractedInfo.phone}</p>
+
+          <h2><FaTools /> Skills</h2>
+          <ul className="skills-list">
+            {extractedInfo.skills.map((skill, index) => (
+              <li key={index}>{skill}</li>
+            ))}
           </ul>
 
-          <h2 className="text-2xl font-semibold mt-6 mb-2">📂 Domain Recommendation</h2>
-          <p className="text-gray-100 text-sm"><strong>{result.domain}</strong></p>
+<h2><FaFolderOpen /> Recommended Domain</h2>
+<p>Based on your skills, your resume aligns well with:</p>
+<div style={{
+  display: "inline-block",
+  backgroundColor: "#e8f8f5",
+  color: "#117864",
+  padding: "8px 18px",
+  borderRadius: "30px",
+  fontWeight: "600",
+  fontSize: "16px",
+  marginTop: "10px"
+}}>
+  <b>{extractedInfo.recommended_domain}</b>
+</div>
 
-          <h2 className="text-2xl font-semibold mt-6 mb-2">📊 Resume Score</h2>
-          <div className="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
-            <div
-              className="bg-green-500 h-full text-xs text-white text-center transition-all duration-500"
-              style={{ width: `${result.score || 0}%` }}
-            >
-              {result.score || 0}%
-            </div>
+
+          <h2><FaChartBar /> Resume Score</h2>
+          <div className="score-circle">
+            <CircularProgressbar
+              value={extractedInfo.resume_score}
+              text={`${extractedInfo.resume_score}`}
+              styles={buildStyles({
+                textSize: "24px",
+                pathColor: "#1abc9c",
+                textColor: "#2c3e50",
+                trailColor: "#ecf0f1",
+              })}
+            />
           </div>
 
-          <h2 className="text-2xl font-semibold mt-6 mb-2">📌 Resume Tips</h2>
-          {result.tips.length > 0 ? (
-            <ul className="list-disc list-inside text-green-400 text-sm space-y-1">
-              {result.tips.map((tip, idx) => <li key={idx}>{tip}</li>)}
-            </ul>
-          ) : (
-            <p className="text-sm text-gray-400">✅ No tips needed — great resume!</p>
-          )}
+          <h2><FaThumbtack /> Resume Tips</h2>
+          <div className="tips-section">
+            
+            <div className="tips-list">
+              {extractedInfo.tips.map((tip, index) => {
+                const [intro, skillsPart] = tip.split(":");
+                const skills = skillsPart ? skillsPart.split(",").map(s => s.trim()) : [];
+
+                return (
+                  <div key={index} className="tip-group text-center">
+                    <p className="font-medium">{intro}:</p>
+                    <div className="skill-pill-container justify-center">
+                      {skills.map((skill, idx) => (
+                        <span key={idx} className="skill-pill">{skill}</span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
     </div>
   );
-}
+};
 
 export default App;
