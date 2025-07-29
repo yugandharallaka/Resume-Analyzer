@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 import re
+import traceback
+import uuid
 from collections import OrderedDict
 from resume_parser import extract_info
 from tips import get_resume_tips
@@ -9,58 +11,60 @@ from tips import get_resume_tips
 app = Flask(__name__)
 CORS(app)
 
-UPLOAD_FOLDER = os.path.join("backend")
+UPLOAD_FOLDER = os.path.join("backend", "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def calculate_resume_score(text, extracted_skills):
     score = 0
+    text_lower = text.lower()
+    skills_lower = set(s.lower() for s in extracted_skills)
 
     # 1. Contact Info (10 points)
-    contact_present = any([
-        re.search(r'\b[A-Za-z]+\s[A-Za-z]+\b', text),  # name pattern
-        re.search(r'\b[\w\.-]+@[\w\.-]+\.\w{2,4}\b', text),
-        re.search(r'(\+91)?[6-9]\d{9}', text)
-    ])
-    if contact_present:
+    if re.search(r'\b[\w\.-]+@[\w\.-]+\.\w{2,4}\b', text_lower) and re.search(r'(\+91)?[6-9]\d{9}', text_lower):
         score += 10
+    else:
+        score -= 5  # penalty if missing
 
     # 2. Skill Relevance (20 points)
-    data_science_keywords = {"python", "pandas", "numpy", "matplotlib", "seaborn", "nltk", "machine learning", "data analysis"}
-    matched_skills = data_science_keywords.intersection(set(s.lower() for s in extracted_skills))
+    important_skills = {"python", "pandas", "numpy", "matplotlib", "seaborn", "nltk", "machine learning", "data analysis"}
+    matched_skills = important_skills.intersection(skills_lower)
     score += min(20, len(matched_skills) * 2)
 
     # 3. Projects or Experience (15 points)
-    if any(word in text.lower() for word in ["project", "experience", "internship"]):
+    if any(word in text_lower for word in ["project", "experience", "internship"]):
         score += 15
 
-    # 4. Education Info (15 points)
-    if re.search(r"(B\.?Tech|M\.?Tech|Bachelor|Master|Degree|University|College)", text, re.IGNORECASE):
-        score += 15
-
-    # 5. Tools & Technologies (10 points)
-    tools = {"jupyter", "tableau", "git", "colab", "excel", "vscode"}
-    found_tools = tools.intersection(set(text.lower().split()))
-    score += min(10, len(found_tools) * 2)
-
-    # 6. Soft Skills (10 points)
-    soft_skills = {"communication", "teamwork", "leadership", "collaboration", "adaptability"}
-    found_soft = soft_skills.intersection(set(text.lower().split()))
-    if found_soft:
+    # 4. Education (10 points)
+    if re.search(r"(b\\.?tech|m\\.?tech|bachelor|master|degree|university|college)", text_lower):
         score += 10
 
-    # 7. Formatting / Length (10 points)
-    if 100 < len(text.split()) < 1000:  # decent length
+    # 5. Certifications (10 points)
+    if any(word in text_lower for word in ["certification", "certified", "coursera", "udemy", "kaggle"]):
         score += 10
 
-    # 8. Certifications (10 points)
-    if any(word in text.lower() for word in ["coursera", "certification", "certified", "udemy", "kaggle"]):
-        score += 10
+    # 6. Tools & Platforms (10 points)
+    tools = {"jupyter", "tableau", "colab", "excel", "git", "vscode"}
+    matched_tools = tools.intersection(set(text_lower.split()))
+    score += min(10, len(matched_tools) * 2)
 
-    return min(score, 100)
+    # 7. Soft Skills (5 points)
+    soft_skills = {"communication", "leadership", "teamwork", "adaptability"}
+    matched_soft = soft_skills.intersection(set(text_lower.split()))
+    if matched_soft:
+        score += 5
+
+    # 8. Resume Length (5 points)
+    word_count = len(text.split())
+    if 150 <= word_count <= 1000:
+        score += 5
+    elif word_count < 100:
+        score -= 5
+
+    return max(min(score, 100), 0)
 
 @app.route('/')
 def home():
-    return 'Resume Analyzer Backend is Running'
+    return '✅ Resume Analyzer Backend is Running'
 
 @app.route('/upload', methods=['POST'])
 def upload_resume():
@@ -72,28 +76,22 @@ def upload_resume():
         if file.filename == '':
             return jsonify({'error': 'No selected file'}), 400
 
-        # Get file extension
         ext = file.filename.rsplit('.', 1)[-1].lower()
         if ext not in ['pdf', 'docx']:
             return jsonify({'error': 'Unsupported file format. Only PDF and DOCX allowed.'}), 400
 
-        # Save with original extension
-        filepath = os.path.join(UPLOAD_FOLDER, f"uploaded_resume.{ext}")
+        filename = f"{uuid.uuid4()}.{ext}"
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
         file.save(filepath)
 
-        # Extract basic info, skills, and full text
         result = extract_info(filepath)
         basic_info = result.get("basic_info", {})
         skills = result.get("skills", [])
         full_text = result.get("text", "")
 
-        # Get domain and tips
         domain_line, tips = get_resume_tips(skills)
-
-        # Calculate resume score
         score = calculate_resume_score(full_text, skills)
 
-        # Return ordered response
         ordered_response = OrderedDict()
         ordered_response['basic_info'] = basic_info
         ordered_response['skills'] = skills
@@ -104,6 +102,7 @@ def upload_resume():
         return jsonify(ordered_response), 200
 
     except Exception as e:
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
